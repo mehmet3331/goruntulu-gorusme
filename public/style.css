@@ -1,12 +1,187 @@
-body{
-    font-family: Arial;
-    padding:20px;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
+body{
+    background:#000;
+    overflow:hidden;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+/* KARŞI TARAF */
+
+#remoteVideo{
+    position:fixed;
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    object-fit:contain;
+
+    background:black;
+}
+
+/* BEN */
+
+#myVideo{
+    position:fixed;
+
+    top:15px;
+    right:15px;
+
+    width:240px;
+    height:180px;
+
+    object-fit:cover;
+
+    border-radius:12px;
+
+    border:2px solid white;
+
+    transform:scaleX(-1);
+
+    z-index:999;
+}
+
+/* ALT BUTONLAR */
+
+.controls{
+    position:fixed;
+
+    bottom:15px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    display:flex;
+
+    gap:10px;
+
+    z-index:1000;
+}
+
+.controls button{
+    padding:12px 18px;
+
+    border:none;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-size:15px;
+}
+
+/* SOHBET PANELİ */
+
+#chatPanel{
+
+    position:fixed;
+
+    left:0;
+
+    top:0;
+
+    width:75%;
+
+    height:100vh;
+
+    background:#000;
+
+    display:none;
+
+    flex-direction:column;
+
+    border-right:1px solid #333;
+
+    z-index:998;
+}
+
+/* MESAJLAR */
+
 #messages{
-    border:1px solid #ccc;
-    height:300px;
-    overflow:auto;
+
+    flex:1;
+
+    overflow-y:auto;
+
+    padding:15px;
+
+}
+
+/* KARŞI TARAF */
+
+.otherMessage{
+
+    text-align:left;
+
+    margin-bottom:12px;
+
+    color:#6cbcff;
+
+    word-wrap:break-word;
+
+    overflow-wrap:break-word;
+
+    white-space:pre-wrap;
+}
+
+/* BEN */
+
+.myMessage{
+
+    text-align:center;
+
+    margin-bottom:12px;
+
+    color:#66ff66;
+
+    word-wrap:break-word;
+
+    overflow-wrap:break-word;
+
+    white-space:pre-wrap;
+}
+
+/* YAZMA ALANI */
+
+.chatInput{
+
+    display:flex;
+
+    gap:10px;
+
     padding:10px;
-    margin-bottom:10px;
+
+    border-top:1px solid #333;
+}
+
+.chatInput input{
+
+    flex:1;
+
+    padding:12px;
+
+    background:#111;
+
+    color:white;
+
+    border:none;
+
+    border-radius:8px;
+}
+
+.chatInput button{
+
+    padding:12px 20px;
+
+    border:none;
+
+    border-radius:8px;
+
+    cursor:pointer;
 }

@@ -3,25 +3,48 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
 
-app.use(express.static("public"));
+const server =
+http.createServer(app);
 
-io.on("connection", (socket) => {
-    console.log("Bir kullanıcı bağlandı");
+const io =
+new Server(server);
 
-    socket.on("chat-message", (msg) => {
-        io.emit("chat-message", msg);
-    });
+app.use(
+    express.static("public")
+);
 
-    socket.on("disconnect", () => {
-        console.log("Kullanıcı ayrıldı");
-    });
-});
+io.on(
+    "connection",
+    socket=>{
 
-const PORT = process.env.PORT || 3000;
+        socket.on(
+            "chat-message",
+            msg=>{
 
-server.listen(PORT, "0.0.0.0", () => {
-    console.log(`Sunucu çalışıyor: ${PORT}`);
-});
+                socket.broadcast.emit(
+                    "chat-message",
+                    msg
+                );
+
+            }
+        );
+
+    }
+);
+
+const PORT =
+process.env.PORT || 3000;
+
+server.listen(
+    PORT,
+    "0.0.0.0",
+    ()=>{
+
+        console.log(
+            "Sunucu çalışıyor: "
+            + PORT
+        );
+
+    }
+);
