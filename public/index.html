@@ -5,40 +5,40 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width,initial-scale=1">
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1.0">
 
-<title>Özel Görüntülü Görüşme</title>
+<title>Görüntülü Görüşme</title>
 
-<link rel="stylesheet"
+<link
+rel="stylesheet"
 href="style.css">
 
 </head>
 
 <body>
 
-<div id="loginScreen">
+<div id="roomScreen">
 
-<h2>
-Özel Odaya Giriş
-</h2>
+<h2>Odaya Katıl</h2>
 
 <input
-id="roomInput"
-placeholder="Oda Adı"
->
+id="roomName"
+placeholder="Oda adı">
 
 <input
-id="passwordInput"
+id="roomPassword"
 type="password"
-placeholder="Şifre"
->
+placeholder="Oda şifresi">
 
 <button id="joinBtn">
 Odaya Gir
 </button>
 
 </div>
+
+<div id="mainScreen">
 
 <video
 id="remoteVideo"
@@ -53,33 +53,56 @@ playsinline
 muted>
 </video>
 
-<div id="topControls">
-
-<button id="cameraBtn">
-📷 Açık
-</button>
+<div id="topBar">
 
 <button id="micBtn">
 🎤 Açık
+</button>
+
+<button id="camBtn">
+📷 Açık
+</button>
+
+<button id="soundBtn">
+🔊 Kapalı
+</button>
+
+<input
+type="range"
+id="volumeSlider"
+min="0"
+max="1"
+step="0.01"
+value="0">
+
+<button id="changePasswordBtn">
+🔐 Şifre Değiştir
 </button>
 
 <button id="chatToggle">
 💬 Mesaj
 </button>
 
-<div id="volumeBox">
-
-🔊
-
-<input
-type="range"
-id="volumeSlider"
-min="0"
-max="100"
-value="0"
->
-
 </div>
+
+<div id="emojiPanel">
+
+<span>😀</span>
+<span>😁</span>
+<span>😂</span>
+<span>🤣</span>
+<span>😊</span>
+<span>😍</span>
+<span>😘</span>
+<span>😎</span>
+<span>🤔</span>
+<span>😢</span>
+<span>😭</span>
+<span>😡</span>
+<span>👍</span>
+<span>👎</span>
+<span>👏</span>
+<span>❤️</span>
 
 </div>
 
@@ -87,30 +110,17 @@ value="0"
 
 <div id="messages"></div>
 
-<div id="emojiBar">
-
-<span class="emoji">😀</span>
-<span class="emoji">😂</span>
-<span class="emoji">😍</span>
-<span class="emoji">😎</span>
-<span class="emoji">👍</span>
-<span class="emoji">❤️</span>
-<span class="emoji">🔥</span>
-<span class="emoji">🎉</span>
-
-</div>
-
 <div id="inputArea">
 
 <input
 id="messageInput"
-placeholder="Mesaj yaz..."
-autocomplete="off"
->
+placeholder="Mesaj yaz...">
 
 <button id="sendBtn">
 Gönder
 </button>
+
+</div>
 
 </div>
 
@@ -123,4 +133,5 @@ Gönder
 <script src="script.js"></script>
 
 </body>
+
 </html>

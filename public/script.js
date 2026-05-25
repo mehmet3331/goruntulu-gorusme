@@ -1,22 +1,25 @@
 const socket = io();
 
-const myVideo =
-document.getElementById("myVideo");
+const myVideo = document.getElementById("myVideo");
+const remoteVideo = document.getElementById("remoteVideo");
 
-const remoteVideo =
-document.getElementById("remoteVideo");
+const roomScreen =
+document.getElementById("roomScreen");
+
+const mainScreen =
+document.getElementById("mainScreen");
 
 const joinBtn =
 document.getElementById("joinBtn");
 
-const roomInput =
-document.getElementById("roomInput");
+const roomName =
+document.getElementById("roomName");
 
-const passwordInput =
-document.getElementById("passwordInput");
+const roomPassword =
+document.getElementById("roomPassword");
 
-const loginScreen =
-document.getElementById("loginScreen");
+const changePasswordBtn =
+document.getElementById("changePasswordBtn");
 
 const chatToggle =
 document.getElementById("chatToggle");
@@ -33,25 +36,27 @@ document.getElementById("sendBtn");
 const messages =
 document.getElementById("messages");
 
-const cameraBtn =
-document.getElementById("cameraBtn");
-
 const micBtn =
 document.getElementById("micBtn");
+
+const camBtn =
+document.getElementById("camBtn");
+
+const soundBtn =
+document.getElementById("soundBtn");
 
 const volumeSlider =
 document.getElementById("volumeSlider");
 
+let peer;
 let localStream;
 
-let peer;
+let currentRoom = "";
 
-let roomName = "";
+let micEnabled = true;
+let camEnabled = true;
 
-remoteVideo.volume = 0;
-
-navigator.mediaDevices
-.getUserMedia({
+navigator.mediaDevices.getUserMedia({
 video:true,
 audio:true
 })
@@ -59,15 +64,14 @@ audio:true
 
 localStream = stream;
 
-myVideo.srcObject =
-stream;
+myVideo.srcObject = stream;
 
 })
 .catch(err=>{
 
 alert(
-"Kamera veya mikrofon açılamadı\n\n"
-+ err.message
+"Kamera açılamadı:\n" +
+err.message
 );
 
 });
@@ -75,89 +79,80 @@ alert(
 joinBtn.onclick = ()=>{
 
 const room =
-roomInput.value.trim();
+roomName.value.trim();
 
 const password =
-passwordInput.value.trim();
+roomPassword.value.trim();
 
-if(!room){
+if(!room || !password){
 
 alert(
-"Oda adı gir"
+"Oda adı ve şifre gerekli"
 );
 
 return;
+
 }
 
-if(!password){
-
-alert(
-"Şifre gir"
-);
-
-return;
-}
-
-roomName = room;
+currentRoom = room;
 
 socket.emit(
 "join-room",
 {
-room:room,
-password:password
+room,
+password
 }
 );
 
 };
 
 socket.on(
-"joined",
-()=>{
+"room-error",
+msg=>{
 
-loginScreen.style.display =
+alert(msg);
+
+}
+);
+
+socket.on(
+"joined-room",
+count=>{
+
+roomScreen.style.display =
 "none";
 
-});
+mainScreen.style.display =
+"block";
 
-socket.on(
-"wrong-password",
-()=>{
-
-alert(
-"Şifre yanlış"
-);
-
-});
-
-socket.on(
-"room-full",
-()=>{
-
-alert(
-"Oda dolu"
-);
-
-});
-
-socket.on(
-"ready",
-()=>{
-
-if(peer) return;
+if(count === 1){
 
 createPeer(true);
 
-});
+}
+
+}
+);
+
+socket.on(
+"user-connected",
+()=>{
+
+if(!peer){
+
+createPeer(false);
+
+}
+
+}
+);
 
 function createPeer(initiator){
 
-peer =
-new SimplePeer({
+peer = new SimplePeer({
 
-initiator:initiator,
-
+initiator,
 trickle:false,
-
 stream:localStream
 
 });
@@ -169,12 +164,13 @@ signal=>{
 socket.emit(
 "signal",
 {
-room:roomName,
-signal:signal
+room:currentRoom,
+signal
 }
 );
 
-});
+}
+);
 
 peer.on(
 "stream",
@@ -183,7 +179,8 @@ stream=>{
 remoteVideo.srcObject =
 stream;
 
-});
+}
+);
 
 peer.on(
 "error",
@@ -191,7 +188,8 @@ err=>{
 
 console.log(err);
 
-});
+}
+);
 
 }
 
@@ -207,56 +205,86 @@ createPeer(false);
 
 peer.signal(signal);
 
-});
+}
+);
 
-cameraBtn.onclick = ()=>{
+socket.on(
+"user-disconnected",
+()=>{
 
-if(!localStream) return;
+remoteVideo.srcObject = null;
 
-const track =
-localStream.getVideoTracks()[0];
+}
+);
 
-track.enabled =
-!track.enabled;
+sendBtn.onclick = ()=>{
 
-cameraBtn.textContent =
-track.enabled
-?
-"📷 Açık"
-:
-"📷 Kapalı";
+const text =
+input.value.trim();
 
-};
+if(!text) return;
 
-micBtn.onclick = ()=>{
+socket.emit(
+"chat-message",
+text
+);
 
-if(!localStream) return;
+const div =
+document.createElement("div");
 
-const track =
-localStream.getAudioTracks()[0];
+div.className =
+"myMessage";
 
-track.enabled =
-!track.enabled;
+div.textContent =
+"BEN -> " + text;
 
-micBtn.textContent =
-track.enabled
-?
-"🎤 Açık"
-:
-"🎤 Kapalı";
+messages.appendChild(div);
 
-};
+messages.scrollTop =
+messages.scrollHeight;
 
-volumeSlider.oninput = ()=>{
-
-remoteVideo.volume =
-volumeSlider.value / 100;
+input.value="";
 
 };
+
+socket.on(
+"chat-message",
+msg=>{
+
+const div =
+document.createElement("div");
+
+div.className =
+"otherMessage";
+
+div.textContent =
+"SEN -> " + msg;
+
+messages.appendChild(div);
+
+messages.scrollTop =
+messages.scrollHeight;
+
+if(
+chatPanel.style.display !==
+"flex"
+){
+
+chatToggle.classList.add(
+"newMessageBlink"
+);
+
+}
+
+}
+);
 
 chatToggle.onclick = ()=>{
 
-if(chatPanel.style.display==="flex"){
+if(
+chatPanel.style.display ===
+"flex"
+){
 
 chatPanel.style.display =
 "none";
@@ -274,66 +302,13 @@ document.body.classList.add(
 "chat-open"
 );
 
+chatToggle.classList.remove(
+"newMessageBlink"
+);
+
 }
 
 };
-
-function addMyMessage(text){
-
-const div =
-document.createElement("div");
-
-div.className =
-"myMessage";
-
-div.textContent =
-"BEN -> " + text;
-
-messages.appendChild(div);
-
-messages.scrollTop =
-messages.scrollHeight;
-
-}
-
-function addOtherMessage(text){
-
-const div =
-document.createElement("div");
-
-div.className =
-"otherMessage";
-
-div.textContent =
-"SEN -> " + text;
-
-messages.appendChild(div);
-
-messages.scrollTop =
-messages.scrollHeight;
-
-}
-
-function sendMessage(){
-
-const text =
-input.value.trim();
-
-if(!text) return;
-
-addMyMessage(text);
-
-socket.emit(
-"chat-message",
-text
-);
-
-input.value="";
-
-}
-
-sendBtn.onclick =
-sendMessage;
 
 input.addEventListener(
 "keydown",
@@ -341,32 +316,127 @@ e=>{
 
 if(e.key==="Enter"){
 
-sendMessage();
+sendBtn.click();
 
 }
 
 }
 );
 
-socket.on(
-"chat-message",
-msg=>{
+micBtn.onclick = ()=>{
 
-addOtherMessage(msg);
+micEnabled =
+!micEnabled;
+
+localStream
+.getAudioTracks()
+.forEach(track=>{
+
+track.enabled =
+micEnabled;
+
+});
+
+micBtn.textContent =
+micEnabled
+? "🎤 Açık"
+: "🔇 Kapalı";
+
+};
+
+camBtn.onclick = ()=>{
+
+camEnabled =
+!camEnabled;
+
+localStream
+.getVideoTracks()
+.forEach(track=>{
+
+track.enabled =
+camEnabled;
+
+});
+
+camBtn.textContent =
+camEnabled
+? "📷 Açık"
+: "🚫 Kapalı";
+
+};
+
+remoteVideo.muted = true;
+
+volumeSlider.value = 0;
+
+volumeSlider.oninput = ()=>{
+
+remoteVideo.muted = false;
+
+remoteVideo.volume =
+parseFloat(
+volumeSlider.value
+);
+
+};
+
+soundBtn.onclick = ()=>{
+
+if(remoteVideo.muted){
+
+remoteVideo.muted = false;
+
+soundBtn.textContent =
+"🔊 Açık";
+
+}else{
+
+remoteVideo.muted = true;
+
+soundBtn.textContent =
+"🔇 Kapalı";
+
+}
+
+};
+
+changePasswordBtn.onclick = ()=>{
+
+const pass =
+prompt(
+"Yeni şifre"
+);
+
+if(!pass) return;
+
+socket.emit(
+"change-password",
+pass
+);
+
+};
+
+socket.on(
+"password-changed",
+()=>{
+
+alert(
+"Oda şifresi değiştirildi"
+);
 
 }
 );
 
 document
-.querySelectorAll(".emoji")
-.forEach(emoji=>{
+.querySelectorAll(
+"#emojiPanel span"
+)
+.forEach(item=>{
 
-emoji.onclick = ()=>{
+item.onclick = ()=>{
 
 input.value +=
-emoji.textContent;
-
-input.focus();
+item.textContent;
 
 };
 
