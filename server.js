@@ -14,20 +14,104 @@ app.use(
 express.static("public")
 );
 
+const rooms = {};
+
 io.on(
 "connection",
 (socket)=>{
 
-console.log(
-"Kullanıcı bağlandı"
+socket.on(
+"join-room",
+(data)=>{
+
+const room =
+data.room;
+
+const password =
+data.password;
+
+if(!rooms[room]){
+
+rooms[room] = {
+password: password,
+users: []
+};
+
+}
+
+if(
+rooms[room].password !== password
+){
+
+socket.emit(
+"wrong-password"
 );
 
-socket.on("chat-message",(msg)=>{
+return;
+}
 
-socket.broadcast.emit(
+if(
+rooms[room].users.length >= 2
+){
+
+socket.emit(
+"room-full"
+);
+
+return;
+}
+
+socket.join(room);
+
+socket.room = room;
+
+rooms[room].users.push(
+socket.id
+);
+
+socket.emit(
+"joined"
+);
+
+if(
+rooms[room].users.length === 2
+){
+
+io.to(room).emit(
+"ready"
+);
+
+}
+
+});
+
+socket.on(
+"signal",
+(data)=>{
+
+socket.to(
+data.room
+).emit(
+"signal",
+data.signal
+);
+
+});
+
+socket.on(
+"chat-message",
+(msg)=>{
+
+if(socket.room){
+
+socket.to(
+socket.room
+).emit(
 "chat-message",
 msg
 );
+
+}
 
 });
 
@@ -35,14 +119,32 @@ socket.on(
 "disconnect",
 ()=>{
 
-console.log(
-"Kullanıcı ayrıldı"
+const room =
+socket.room;
+
+if(
+room &&
+rooms[room]
+){
+
+rooms[room].users =
+rooms[room].users.filter(
+id=>id!==socket.id
 );
+
+if(
+rooms[room].users.length===0
+){
+
+delete rooms[room];
+
+}
+
+}
 
 });
 
-}
-);
+});
 
 const PORT =
 process.env.PORT || 3000;
@@ -53,7 +155,8 @@ PORT,
 ()=>{
 
 console.log(
-"Sunucu çalışıyor: " + PORT
+"Sunucu çalışıyor: "
++ PORT
 );
 
 }

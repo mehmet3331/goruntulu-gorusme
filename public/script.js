@@ -6,6 +6,18 @@ document.getElementById("myVideo");
 const remoteVideo =
 document.getElementById("remoteVideo");
 
+const joinBtn =
+document.getElementById("joinBtn");
+
+const roomInput =
+document.getElementById("roomInput");
+
+const passwordInput =
+document.getElementById("passwordInput");
+
+const loginScreen =
+document.getElementById("loginScreen");
+
 const chatToggle =
 document.getElementById("chatToggle");
 
@@ -32,6 +44,10 @@ document.getElementById("volumeSlider");
 
 let localStream;
 
+let peer;
+
+let roomName = "";
+
 remoteVideo.volume = 0;
 
 navigator.mediaDevices
@@ -50,35 +66,152 @@ stream;
 .catch(err=>{
 
 alert(
-"Kamera açılamadı: "
+"Kamera veya mikrofon açılamadı\n\n"
 + err.message
 );
 
 });
 
-chatToggle.onclick = ()=>{
+joinBtn.onclick = ()=>{
 
-if(chatPanel.style.display==="flex"){
+const room =
+roomInput.value.trim();
 
-chatPanel.style.display="none";
+const password =
+passwordInput.value.trim();
 
-document.body.classList.remove(
-"chat-open"
+if(!room){
+
+alert(
+"Oda adı gir"
 );
 
-}else{
-
-chatPanel.style.display="flex";
-
-document.body.classList.add(
-"chat-open"
-);
-
+return;
 }
+
+if(!password){
+
+alert(
+"Şifre gir"
+);
+
+return;
+}
+
+roomName = room;
+
+socket.emit(
+"join-room",
+{
+room:room,
+password:password
+}
+);
 
 };
 
+socket.on(
+"joined",
+()=>{
+
+loginScreen.style.display =
+"none";
+
+});
+
+socket.on(
+"wrong-password",
+()=>{
+
+alert(
+"Şifre yanlış"
+);
+
+});
+
+socket.on(
+"room-full",
+()=>{
+
+alert(
+"Oda dolu"
+);
+
+});
+
+socket.on(
+"ready",
+()=>{
+
+if(peer) return;
+
+createPeer(true);
+
+});
+
+function createPeer(initiator){
+
+peer =
+new SimplePeer({
+
+initiator:initiator,
+
+trickle:false,
+
+stream:localStream
+
+});
+
+peer.on(
+"signal",
+signal=>{
+
+socket.emit(
+"signal",
+{
+room:roomName,
+signal:signal
+}
+);
+
+});
+
+peer.on(
+"stream",
+stream=>{
+
+remoteVideo.srcObject =
+stream;
+
+});
+
+peer.on(
+"error",
+err=>{
+
+console.log(err);
+
+});
+
+}
+
+socket.on(
+"signal",
+signal=>{
+
+if(!peer){
+
+createPeer(false);
+
+}
+
+peer.signal(signal);
+
+});
+
 cameraBtn.onclick = ()=>{
+
+if(!localStream) return;
 
 const track =
 localStream.getVideoTracks()[0];
@@ -96,6 +229,8 @@ track.enabled
 };
 
 micBtn.onclick = ()=>{
+
+if(!localStream) return;
 
 const track =
 localStream.getAudioTracks()[0];
@@ -116,6 +251,30 @@ volumeSlider.oninput = ()=>{
 
 remoteVideo.volume =
 volumeSlider.value / 100;
+
+};
+
+chatToggle.onclick = ()=>{
+
+if(chatPanel.style.display==="flex"){
+
+chatPanel.style.display =
+"none";
+
+document.body.classList.remove(
+"chat-open"
+);
+
+}else{
+
+chatPanel.style.display =
+"flex";
+
+document.body.classList.add(
+"chat-open"
+);
+
+}
 
 };
 

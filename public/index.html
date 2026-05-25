@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
 
 <meta charset="UTF-8">
@@ -7,13 +8,37 @@
 <meta name="viewport"
 content="width=device-width,initial-scale=1">
 
-<title>Görüntülü Görüşme</title>
+<title>Özel Görüntülü Görüşme</title>
 
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet"
+href="style.css">
 
 </head>
 
 <body>
+
+<div id="loginScreen">
+
+<h2>
+Özel Odaya Giriş
+</h2>
+
+<input
+id="roomInput"
+placeholder="Oda Adı"
+>
+
+<input
+id="passwordInput"
+type="password"
+placeholder="Şifre"
+>
+
+<button id="joinBtn">
+Odaya Gir
+</button>
+
+</div>
 
 <video
 id="remoteVideo"
@@ -60,8 +85,7 @@ value="0"
 
 <div id="chatPanel">
 
-<div id="messages">
-</div>
+<div id="messages"></div>
 
 <div id="emojiBar">
 
@@ -93,6 +117,8 @@ Gönder
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+
+<script src="https://unpkg.com/simple-peer@9.11.1/simplepeer.min.js"></script>
 
 <script src="script.js"></script>
 
