@@ -25,6 +25,7 @@ const changePasswordBtn = document.getElementById("changePasswordBtn");
 
 let localStream;
 let peer = null;
+
 let currentRoom = "";
 
 let micEnabled = true;
@@ -37,14 +38,13 @@ navigator.mediaDevices.getUserMedia({
 .then(stream => {
 
     localStream = stream;
-
     myVideo.srcObject = stream;
 
 })
 .catch(err => {
 
     alert(
-        "Kamera/Mikrofon açılamadı:\n" +
+        "Kamera/Mikrofon açılamadı\n" +
         err.message
     );
 
@@ -52,75 +52,55 @@ navigator.mediaDevices.getUserMedia({
 
 joinBtn.onclick = () => {
 
-    const room =
-    roomName.value.trim();
+    const room = roomName.value.trim();
+    const password = roomPassword.value.trim();
 
-    const password =
-    roomPassword.value.trim();
+    if (!room || !password) {
 
-    if(!room || !password){
-
-        alert(
-        "Oda adı ve şifre gir"
-        );
-
+        alert("Oda adı ve şifre gerekli");
         return;
+
     }
 
     currentRoom = room;
 
-    socket.emit(
-        "join-room",
-        {
-            room,
-            password
-        }
-    );
+    socket.emit("join-room", {
+        room,
+        password
+    });
 
 };
 
-socket.on(
-    "room-error",
-    msg => {
+socket.on("room-error", msg => {
 
-        alert(msg);
+    alert(msg);
 
-    }
-);
+});
 
-socket.on(
-    "joined-room",
-    count => {
+socket.on("joined-room", count => {
 
-        roomScreen.style.display =
-        "none";
+    roomScreen.style.display = "none";
+    mainScreen.style.display = "block";
 
-        mainScreen.style.display =
-        "block";
+    if (count === 2) {
 
-        if(count === 1){
-
-            createPeer(true);
-
-        }
+        createPeer(true);
 
     }
-);
 
-socket.on(
-    "user-connected",
-    () => {
+});
 
-        if(!peer){
+socket.on("user-connected", () => {
 
-            createPeer(false);
+    if (!peer) {
 
-        }
+        createPeer(false);
 
     }
-);
 
-function createPeer(initiator){
+});
+
+function createPeer(initiator) {
 
     peer = new SimplePeer({
 
@@ -130,129 +110,107 @@ function createPeer(initiator){
 
         stream: localStream,
 
-        config:{
-            iceServers:[
+        config: {
+
+            iceServers: [
+
                 {
-                    urls:[
+                    urls: [
                         "stun:stun.l.google.com:19302",
                         "stun:stun1.l.google.com:19302"
                     ]
                 }
+
             ]
+
         }
 
     });
 
-    peer.on(
-        "signal",
-        signal => {
+    peer.on("signal", signal => {
+        console.log("SIGNAL ÜRETİLDİ");
 
-            socket.emit(
-                "signal",
-                {
-                    room: currentRoom,
-                    signal: signal
-                }
-            );
+        socket.emit("signal", {
+            room: currentRoom,
+            signal
+        });
 
-        }
-    );
+    });
 
-    peer.on(
-        "stream",
-        stream => {
+    peer.on("stream", stream => {
+console.log("UZAK KAMERA GELDİ");
+        remoteVideo.srcObject = stream;
 
-            remoteVideo.srcObject =
-            stream;
+    });
 
-        }
-    );
+    peer.on("connect", () => {
 
-    peer.on(
-        "error",
-        err => {
+        console.log("Peer bağlandı");
 
-            console.log(
-                "Peer hata:",
-                err
-            );
+    });
 
-        }
-    );
+    peer.on("error", err => {
+
+        console.log(err);
+
+    });
 
 }
 
-socket.on(
-    "signal",
-    signal => {
+socket.on("signal", signal => {
+console.log("SIGNAL GELDİ");
+    if (!peer) {
 
-        if(!peer){
-
-            createPeer(false);
-
-        }
-
-        peer.signal(signal);
+        createPeer(false);
 
     }
-);
 
-socket.on(
-    "user-disconnected",
-    () => {
+    peer.signal(signal);
 
-        remoteVideo.srcObject =
-        null;
+});
 
-        if(peer){
+socket.on("user-disconnected", () => {
 
-            peer.destroy();
+    remoteVideo.srcObject = null;
 
-            peer = null;
+    if (peer) {
 
-        }
+        peer.destroy();
+        peer = null;
 
     }
-);
 
-function addMyMessage(text){
+});
 
-    const div =
-    document.createElement("div");
+function addMyMessage(text) {
 
-    div.className =
-    "myMessage";
+    const div = document.createElement("div");
 
-    div.textContent =
-    "BEN -> " + text;
+    div.className = "myMessage";
+    div.textContent = "BEN -> " + text;
 
     messages.appendChild(div);
 
     messages.scrollTop =
-    messages.scrollHeight;
+        messages.scrollHeight;
 
 }
 
-function addOtherMessage(text){
+function addOtherMessage(text) {
 
-    const div =
-    document.createElement("div");
+    const div = document.createElement("div");
 
-    div.className =
-    "otherMessage";
-
-    div.textContent =
-    "SEN -> " + text;
+    div.className = "otherMessage";
+    div.textContent = "SEN -> " + text;
 
     messages.appendChild(div);
 
     messages.scrollTop =
-    messages.scrollHeight;
+        messages.scrollHeight;
 
-    if(
-        chatPanel.style.display !==
-        "flex"
-    ){
+    if (
+        chatPanel.style.display !== "flex"
+    ) {
 
         chatToggle.classList.add(
             "newMessageBlink"
@@ -265,9 +223,9 @@ function addOtherMessage(text){
 sendBtn.onclick = () => {
 
     const text =
-    input.value.trim();
+        input.value.trim();
 
-    if(!text) return;
+    if (!text) return;
 
     socket.emit(
         "chat-message",
@@ -284,9 +242,7 @@ input.addEventListener(
     "keydown",
     e => {
 
-        if(
-            e.key === "Enter"
-        ){
+        if (e.key === "Enter") {
 
             sendBtn.click();
 
@@ -306,23 +262,27 @@ socket.on(
 
 chatToggle.onclick = () => {
 
-    if(
-        chatPanel.style.display ===
-        "flex"
-    ){
+    if (
+        chatPanel.style.display === "flex"
+    ) {
 
         chatPanel.style.display =
-        "none";
+            "none";
+
+        chatToggle.textContent =
+            "💬 Mesaj";
 
         document.body.classList.remove(
             "chat-open"
         );
 
-    }
-    else{
+    } else {
 
         chatPanel.style.display =
-        "flex";
+            "flex";
+
+        chatToggle.textContent =
+            "❌ Sohbeti Gizle";
 
         document.body.classList.add(
             "chat-open"
@@ -338,43 +298,41 @@ chatToggle.onclick = () => {
 
 micBtn.onclick = () => {
 
-    micEnabled =
-    !micEnabled;
+    micEnabled = !micEnabled;
 
     localStream
-    .getAudioTracks()
-    .forEach(track => {
+        .getAudioTracks()
+        .forEach(track => {
 
-        track.enabled =
-        micEnabled;
+            track.enabled =
+                micEnabled;
 
-    });
+        });
 
     micBtn.textContent =
-    micEnabled
-    ? "🎤 Açık"
-    : "🔇 Kapalı";
+        micEnabled
+            ? "🎤 Açık"
+            : "🔇 Kapalı";
 
 };
 
 camBtn.onclick = () => {
 
-    camEnabled =
-    !camEnabled;
+    camEnabled = !camEnabled;
 
     localStream
-    .getVideoTracks()
-    .forEach(track => {
+        .getVideoTracks()
+        .forEach(track => {
 
-        track.enabled =
-        camEnabled;
+            track.enabled =
+                camEnabled;
 
-    });
+        });
 
     camBtn.textContent =
-    camEnabled
-    ? "📷 Açık"
-    : "🚫 Kapalı";
+        camEnabled
+            ? "📷 Açık"
+            : "🚫 Kapalı";
 
 };
 
@@ -388,32 +346,27 @@ volumeSlider.oninput = () => {
     remoteVideo.muted = false;
 
     remoteVideo.volume =
-    parseFloat(
-        volumeSlider.value
-    );
+        parseFloat(
+            volumeSlider.value
+        );
 
 };
 
 soundBtn.onclick = () => {
 
-    if(
-        remoteVideo.muted
-    ){
+    if (remoteVideo.muted) {
 
-        remoteVideo.muted =
-        false;
+        remoteVideo.muted = false;
 
         soundBtn.textContent =
-        "🔊 Açık";
+            "🔊 Açık";
 
-    }
-    else{
+    } else {
 
-        remoteVideo.muted =
-        true;
+        remoteVideo.muted = true;
 
         soundBtn.textContent =
-        "🔇 Kapalı";
+            "🔇 Kapalı";
 
     }
 
@@ -422,11 +375,9 @@ soundBtn.onclick = () => {
 changePasswordBtn.onclick = () => {
 
     const pass =
-    prompt(
-        "Yeni şifre"
-    );
+        prompt("Yeni şifre");
 
-    if(!pass) return;
+    if (!pass) return;
 
     socket.emit(
         "change-password",
@@ -440,7 +391,7 @@ socket.on(
     () => {
 
         alert(
-            "Oda şifresi değiştirildi"
+            "Şifre değiştirildi"
         );
 
     }
@@ -448,14 +399,14 @@ socket.on(
 
 document
 .querySelectorAll(
-"#emojiPanel span"
+    "#emojiPanel span"
 )
 .forEach(item => {
 
     item.onclick = () => {
 
         input.value +=
-        item.textContent;
+            item.textContent;
 
         input.focus();
 

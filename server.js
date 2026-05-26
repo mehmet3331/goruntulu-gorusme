@@ -17,10 +17,18 @@ const rooms = {};
 
 io.on("connection", socket => {
 
+    console.log(
+        "Bağlandı:",
+        socket.id
+    );
+
     socket.on("join-room", data => {
 
-        const room = data.room;
-        const password = data.password;
+        const room =
+            data.room;
+
+        const password =
+            data.password;
 
         if (!rooms[room]) {
 
@@ -31,7 +39,10 @@ io.on("connection", socket => {
 
         } else {
 
-            if (rooms[room].password !== password) {
+            if (
+                rooms[room].password !==
+                password
+            ) {
 
                 socket.emit(
                     "room-error",
@@ -40,13 +51,16 @@ io.on("connection", socket => {
 
                 return;
             }
+
         }
 
-        if (rooms[room].users.length >= 2) {
+        if (
+            rooms[room].users.length >= 2
+        ) {
 
             socket.emit(
                 "room-error",
-                "Oda dolu"
+                "Bu oda dolu"
             );
 
             return;
@@ -54,93 +68,142 @@ io.on("connection", socket => {
 
         socket.join(room);
 
-        rooms[room].users.push(socket.id);
-
         socket.room = room;
+
+        rooms[room].users.push(
+            socket.id
+        );
+
+        console.log(
+            room,
+            "oda kullanıcı sayısı:",
+            rooms[room].users.length
+        );
 
         socket.emit(
             "joined-room",
             rooms[room].users.length
         );
 
-        socket.to(room).emit(
+        io.to(room).emit(
             "user-connected"
         );
 
     });
 
-    socket.on("change-password", newPassword => {
+    socket.on(
+        "signal",
+        data => {
 
-        if (
-            socket.room &&
-            rooms[socket.room]
-        ) {
-
-            rooms[socket.room].password =
-                newPassword;
-
-            io.to(socket.room).emit(
-                "password-changed"
+            socket
+            .to(data.room)
+            .emit(
+                "signal",
+                data.signal
             );
+
         }
-    });
+    );
 
-    socket.on("signal", data => {
+    socket.on(
+        "chat-message",
+        msg => {
 
-        socket.to(data.room).emit(
-            "signal",
-            data.signal
-        );
+            if (!socket.room)
+                return;
 
-    });
-
-    socket.on("chat-message", msg => {
-
-        if (!socket.room) return;
-
-        socket.to(socket.room).emit(
-            "chat-message",
-            msg
-        );
-
-    });
-
-    socket.on("disconnect", () => {
-
-        const room = socket.room;
-
-        if (
-            room &&
-            rooms[room]
-        ) {
-
-            rooms[room].users =
-                rooms[room].users.filter(
-                    id => id !== socket.id
-                );
-
-            socket.to(room).emit(
-                "user-disconnected"
+            socket
+            .to(socket.room)
+            .emit(
+                "chat-message",
+                msg
             );
+
+        }
+    );
+
+    socket.on(
+        "change-password",
+        newPassword => {
 
             if (
-                rooms[room].users.length === 0
+                socket.room &&
+                rooms[socket.room]
             ) {
 
-                delete rooms[room];
+                rooms[
+                    socket.room
+                ].password =
+                    newPassword;
+
+                io.to(
+                    socket.room
+                ).emit(
+                    "password-changed"
+                );
+
             }
+
         }
-    });
+    );
+
+    socket.on(
+        "disconnect",
+        () => {
+
+            const room =
+                socket.room;
+
+            if (
+                room &&
+                rooms[room]
+            ) {
+
+                rooms[room].users =
+                    rooms[room].users.filter(
+                        id =>
+                            id !== socket.id
+                    );
+
+                socket
+                .to(room)
+                .emit(
+                    "user-disconnected"
+                );
+
+                if (
+                    rooms[room]
+                        .users.length === 0
+                ) {
+
+                    delete rooms[room];
+
+                }
+
+            }
+
+            console.log(
+                "Ayrıldı:",
+                socket.id
+            );
+
+        }
+    );
 
 });
 
 const PORT =
-process.env.PORT || 3000;
+    process.env.PORT || 3000;
 
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
 
-    console.log(
-        "Sunucu çalışıyor: " + PORT
-    );
+        console.log(
+            "Sunucu çalışıyor:",
+            PORT
+        );
 
-});
+    }
+);
