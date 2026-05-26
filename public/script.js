@@ -669,22 +669,19 @@ chatPanel.style.display
 chatPanel.style.display =
 "none";
 
-chatToggle.textContent =
-"💬 Mesaj";
-
 document.body
 .classList.remove(
 "chat-open"
 );
+
+chatToggle.textContent =
+"💬";
 
 }
 else{
 
 chatPanel.style.display =
 "flex";
-
-chatToggle.textContent =
-"❌ Sohbeti Gizle";
 
 document.body
 .classList.add(
@@ -694,6 +691,9 @@ document.body
 chatToggle.classList.remove(
 "newMessageBlink"
 );
+
+chatToggle.textContent =
+"✖";
 
 }
 

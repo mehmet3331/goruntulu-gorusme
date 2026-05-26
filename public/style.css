@@ -181,15 +181,17 @@ z-index:120;
 position:fixed;
 bottom:15px;
 right:15px;
-width:55px;
-height:55px;
+width:60px;
+height:60px;
 border:none;
 border-radius:50%;
 background:#00bcd4;
-color:#fff;
-font-size:22px;
+color:white;
+font-size:26px;
+font-weight:bold;
 cursor:pointer;
 z-index:1000;
+box-shadow:0 0 15px rgba(0,0,0,.4);
 }
 
 /* SOHBET PANELİ */
@@ -339,9 +341,7 @@ height:50px;
 font-size:20px;
 }
 
-.chat-open #chatToggle{
-bottom:50%;
-}
+
 
 }
 #volumeSlider{
