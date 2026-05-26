@@ -7,7 +7,7 @@
 
 <meta
 name="viewport"
-content="width=device-width,initial-scale=1.0">
+content="width=device-width, initial-scale=1.0">
 
 <title>Görüntülü Görüşme</title>
 
@@ -63,6 +63,10 @@ muted>
 📷 Açık
 </button>
 
+<button id="switchCameraBtn">
+🔄 Kamera Çevir
+</button>
+
 <button id="soundBtn">
 🔊 Kapalı
 </button>
@@ -95,6 +99,14 @@ value="0">
 
 </select>
 
+<button id="fullscreenBtn">
+🖥 Tam Ekran
+</button>
+
+<button id="shareScreenBtn">
+📺 Ekran Paylaş
+</button>
+
 <button id="changePasswordBtn">
 🔐 Şifre Değiştir
 </button>
@@ -102,6 +114,32 @@ value="0">
 <button id="chatToggle">
 💬 Mesaj
 </button>
+
+</div>
+
+<div id="statusBar">
+
+<div
+id="pingBox"
+class="statusBox">
+
+Ping:
+<span id="pingValue">
+-
+</span>
+
+</div>
+
+<div
+id="qualityBox"
+class="statusBox">
+
+Bağlantı:
+<span id="connectionQuality">
+-
+</span>
+
+</div>
 
 </div>
 
@@ -153,5 +191,4 @@ Gönder
 <script src="script.js"></script>
 
 </body>
-
 </html>

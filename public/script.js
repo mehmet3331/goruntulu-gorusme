@@ -1,3 +1,5 @@
+console.log("SCRIPT YÜKLENDİ");
+
 const socket = io();
 
 const myVideo =
@@ -60,31 +62,62 @@ document.getElementById("fullscreenBtn");
 const shareScreenBtn =
 document.getElementById("shareScreenBtn");
 
+const switchCameraBtn =
+document.getElementById("switchCameraBtn");
+
+const pingValue =
+document.getElementById("pingValue");
+
+const connectionQuality =
+document.getElementById(
+"connectionQuality"
+);
+
 let peer = null;
+
 let localStream = null;
 
 let currentRoom = "";
 
 let micEnabled = true;
+
 let camEnabled = true;
 
 let currentQuality = 720;
 
-async function startCamera(height = 720){
+let currentFacingMode = "user";
+
+let pingTimer = null;
+
+/* ------------------
+   KAMERA
+------------------- */
+
+async function startCamera(
+height = 720,
+facingMode = currentFacingMode
+){
 
 if(localStream){
 
 localStream
 .getTracks()
-.forEach(track=>track.stop());
+.forEach(track=>
+track.stop()
+);
 
 }
 
 localStream =
-await navigator.mediaDevices
+await navigator
+.mediaDevices
 .getUserMedia({
 
 video:{
+
+facingMode:{
+ideal:facingMode
+},
 
 width:{
 ideal:
@@ -121,7 +154,9 @@ localStream;
 
 }
 
-startCamera(currentQuality)
+startCamera(
+currentQuality
+)
 .catch(err=>{
 
 alert(
@@ -131,6 +166,10 @@ err.message
 
 });
 
+/* ------------------
+   ODAYA GİR
+------------------- */
+
 joinBtn.onclick = ()=>{
 
 const room =
@@ -139,7 +178,10 @@ roomName.value.trim();
 const password =
 roomPassword.value.trim();
 
-if(!room || !password){
+if(
+!room ||
+!password
+){
 
 alert(
 "Oda adı ve şifre gerekli"
@@ -149,7 +191,8 @@ return;
 
 }
 
-currentRoom = room;
+currentRoom =
+room;
 
 socket.emit(
 "join-room",
@@ -164,9 +207,7 @@ password
 socket.on(
 "room-error",
 msg=>{
-
 alert(msg);
-
 }
 );
 
@@ -179,6 +220,8 @@ roomScreen.style.display =
 
 mainScreen.style.display =
 "block";
+
+startPingMonitor();
 
 if(count===2){
 
@@ -202,6 +245,10 @@ createPeer(false);
 }
 );
 
+/* ------------------
+   PEER
+------------------- */
+
 function createPeer(
 initiator
 ){
@@ -213,7 +260,8 @@ initiator,
 
 trickle:false,
 
-stream:localStream,
+stream:
+localStream,
 
 config:{
 
@@ -239,7 +287,8 @@ signal=>{
 socket.emit(
 "signal",
 {
-room:currentRoom,
+room:
+currentRoom,
 signal
 }
 );
@@ -254,7 +303,8 @@ stream=>{
 remoteVideo.srcObject =
 stream;
 
-remoteVideo.play()
+remoteVideo
+.play()
 .catch(()=>{});
 
 }
@@ -272,16 +322,29 @@ console.log(
 );
 
 peer.on(
+"close",
+()=>{
+
+console.log(
+"Peer kapandı"
+);
+
+}
+);
+
+peer.on(
 "error",
 err=>{
 
-console.log(err);
+console.log(
+"Peer hata:",
+err
+);
 
 }
 );
 
 }
-
 socket.on(
 "signal",
 signal=>{
@@ -312,8 +375,18 @@ peer = null;
 
 }
 
+connectionQuality.textContent =
+"Bağlantı Yok";
+
+connectionQuality.className =
+"bad";
+
 }
 );
+
+/* ------------------
+   KALİTE DEĞİŞTİR
+------------------- */
 
 qualitySelect.onchange =
 async ()=>{
@@ -323,8 +396,14 @@ parseInt(
 qualitySelect.value
 );
 
-await startCamera(
+socket.emit(
+"quality-change",
 currentQuality
+);
+
+await startCamera(
+currentQuality,
+currentFacingMode
 );
 
 if(peer){
@@ -351,6 +430,24 @@ localStream
 
 };
 
+socket.on(
+"quality-change",
+quality=>{
+
+console.log(
+"Karşı taraf kalite istedi:",
+quality
+);
+
+}
+);
+
+/* ------------------
+   TAM EKRAN
+------------------- */
+
+if(fullscreenBtn){
+
 fullscreenBtn.onclick =
 ()=>{
 
@@ -370,13 +467,22 @@ document.exitFullscreen();
 
 };
 
+}
+
+/* ------------------
+   EKRAN PAYLAŞ
+------------------- */
+
+if(shareScreenBtn){
+
 shareScreenBtn.onclick =
 async ()=>{
 
 try{
 
 const screenStream =
-await navigator.mediaDevices
+await navigator
+.mediaDevices
 .getDisplayMedia({
 
 video:true
@@ -386,6 +492,8 @@ video:true
 const screenTrack =
 screenStream
 .getVideoTracks()[0];
+
+if(peer){
 
 const sender =
 peer._pc
@@ -404,6 +512,8 @@ screenTrack
 
 }
 
+}
+
 myVideo.srcObject =
 screenStream;
 
@@ -411,18 +521,29 @@ screenTrack.onended =
 async ()=>{
 
 await startCamera(
-currentQuality
+currentQuality,
+currentFacingMode
 );
 
-const cameraTrack =
-localStream
-.getVideoTracks()[0];
+if(peer){
+
+const sender =
+peer._pc
+.getSenders()
+.find(
+s=>
+s.track &&
+s.track.kind==="video"
+);
 
 if(sender){
 
 sender.replaceTrack(
-cameraTrack
+localStream
+.getVideoTracks()[0]
 );
+
+}
 
 }
 
@@ -437,6 +558,12 @@ console.log(err);
 
 };
 
+}
+
+/* ------------------
+   MESAJLAR
+------------------- */
+
 function addMyMessage(
 text
 ){
@@ -448,7 +575,7 @@ div.className =
 "myMessage";
 
 div.textContent =
-"BEN -> " + text;
+"BEN → " + text;
 
 messages.appendChild(div);
 
@@ -468,7 +595,7 @@ div.className =
 "otherMessage";
 
 div.textContent =
-"SEN -> " + text;
+"SEN → " + text;
 
 messages.appendChild(div);
 
@@ -488,12 +615,14 @@ chatToggle.classList.add(
 
 }
 
-sendBtn.onclick = ()=>{
+sendBtn.onclick =
+()=>{
 
 const text =
 input.value.trim();
 
-if(!text) return;
+if(!text)
+return;
 
 socket.emit(
 "chat-message",
@@ -505,12 +634,13 @@ addMyMessage(text);
 input.value="";
 
 };
-
 input.addEventListener(
 "keydown",
 e=>{
 
-if(e.key==="Enter"){
+if(
+e.key==="Enter"
+){
 
 sendBtn.click();
 
@@ -569,11 +699,17 @@ chatToggle.classList.remove(
 
 };
 
+/* ------------------
+   MİKROFON
+------------------- */
+
 micBtn.onclick =
 ()=>{
 
 micEnabled =
 !micEnabled;
+
+if(localStream){
 
 localStream
 .getAudioTracks()
@@ -584,6 +720,8 @@ micEnabled;
 
 });
 
+}
+
 micBtn.textContent =
 micEnabled
 ? "🎤 Açık"
@@ -591,11 +729,17 @@ micEnabled
 
 };
 
+/* ------------------
+   KAMERA
+------------------- */
+
 camBtn.onclick =
 ()=>{
 
 camEnabled =
 !camEnabled;
+
+if(localStream){
 
 localStream
 .getVideoTracks()
@@ -606,6 +750,8 @@ camEnabled;
 
 });
 
+}
+
 camBtn.textContent =
 camEnabled
 ? "📷 Açık"
@@ -613,7 +759,73 @@ camEnabled
 
 };
 
+/* ------------------
+   KAMERA ÇEVİR
+------------------- */
+
+if(switchCameraBtn){
+
+switchCameraBtn.onclick =
+async ()=>{
+
+try{
+
+currentFacingMode =
+currentFacingMode === "user"
+? "environment"
+: "user";
+
+await startCamera(
+currentQuality,
+currentFacingMode
+);
+
+if(peer){
+
+const sender =
+peer._pc
+.getSenders()
+.find(
+s =>
+s.track &&
+s.track.kind==="video"
+);
+
+if(sender){
+
+await sender.replaceTrack(
+localStream
+.getVideoTracks()[0]
+);
+
+}
+
+}
+
+}
+catch(err){
+
+console.log(
+"Kamera çevrilemedi:",
+err
+);
+
+alert(
+"Cihazda ikinci kamera bulunamadı."
+);
+
+}
+
+};
+
+}
+
+/* ------------------
+   SES
+------------------- */
+
 remoteVideo.muted = true;
+
 remoteVideo.volume = 0;
 
 volumeSlider.value = 0;
@@ -634,7 +846,9 @@ volumeSlider.value
 soundBtn.onclick =
 ()=>{
 
-if(remoteVideo.muted){
+if(
+remoteVideo.muted
+){
 
 remoteVideo.muted =
 false;
@@ -655,6 +869,10 @@ soundBtn.textContent =
 
 };
 
+/* ------------------
+   ŞİFRE DEĞİŞTİR
+------------------- */
+
 changePasswordBtn.onclick =
 ()=>{
 
@@ -663,7 +881,8 @@ prompt(
 "Yeni şifre"
 );
 
-if(!pass) return;
+if(!pass)
+return;
 
 socket.emit(
 "change-password",
@@ -682,6 +901,9 @@ alert(
 
 }
 );
+/* ------------------
+   EMOJİLER
+------------------- */
 
 document
 .querySelectorAll(
@@ -700,3 +922,135 @@ input.focus();
 };
 
 });
+
+/* ------------------
+   PING ÖLÇÜMÜ
+------------------- */
+
+function startPingMonitor(){
+
+if(pingTimer){
+
+clearInterval(
+pingTimer
+);
+
+}
+
+pingTimer =
+setInterval(()=>{
+
+socket.emit(
+"ping-check",
+Date.now()
+);
+
+},3000);
+
+}
+
+socket.on(
+"pong-check",
+timestamp=>{
+
+const ping =
+Date.now()
+-
+timestamp;
+
+if(pingValue){
+
+pingValue.textContent =
+ping + " ms";
+
+}
+
+if(
+!connectionQuality
+) return;
+
+if(ping < 100){
+
+connectionQuality.textContent =
+"Mükemmel";
+
+connectionQuality.className =
+"good";
+
+}
+else if(
+ping < 200
+){
+
+connectionQuality.textContent =
+"İyi";
+
+connectionQuality.className =
+"medium";
+
+}
+else{
+
+connectionQuality.textContent =
+"Zayıf";
+
+connectionQuality.className =
+"bad";
+
+}
+
+}
+);
+
+/* ------------------
+   SAYFA KAPANIRKEN
+------------------- */
+
+window.addEventListener(
+"beforeunload",
+()=>{
+
+if(peer){
+
+peer.destroy();
+
+}
+
+if(localStream){
+
+localStream
+.getTracks()
+.forEach(track=>
+track.stop()
+);
+
+}
+
+}
+);
+
+/* ------------------
+   DEBUG
+------------------- */
+
+console.log(
+"Script tamamen yüklendi"
+);
+
+if(
+pingValue &&
+connectionQuality
+){
+
+console.log(
+"Ping paneli bulundu"
+);
+
+}
+else{
+
+console.log(
+"Ping paneli bulunamadı"
+);
+
+}

@@ -15,20 +15,14 @@ app.use(express.static("public"));
 
 const rooms = {};
 
-io.on("connection", socket => {
+io.on("connection", (socket) => {
 
-    console.log(
-        "Bağlandı:",
-        socket.id
-    );
+    console.log("Bağlandı:", socket.id);
 
-    socket.on("join-room", data => {
+    socket.on("join-room", (data) => {
 
-        const room =
-            data.room;
-
-        const password =
-            data.password;
+        const room = data.room;
+        const password = data.password;
 
         if (!rooms[room]) {
 
@@ -39,10 +33,7 @@ io.on("connection", socket => {
 
         } else {
 
-            if (
-                rooms[room].password !==
-                password
-            ) {
+            if (rooms[room].password !== password) {
 
                 socket.emit(
                     "room-error",
@@ -51,12 +42,9 @@ io.on("connection", socket => {
 
                 return;
             }
-
         }
 
-        if (
-            rooms[room].users.length >= 2
-        ) {
+        if (rooms[room].users.length >= 2) {
 
             socket.emit(
                 "room-error",
@@ -85,110 +73,129 @@ io.on("connection", socket => {
             rooms[room].users.length
         );
 
-        io.to(room).emit(
+        socket.to(room).emit(
             "user-connected"
         );
 
     });
 
-    socket.on(
-        "signal",
-        data => {
+    socket.on("signal", (data) => {
 
-            socket
+        socket
             .to(data.room)
             .emit(
                 "signal",
                 data.signal
             );
 
-        }
-    );
+    });
 
-    socket.on(
-        "chat-message",
-        msg => {
+    socket.on("chat-message", (msg) => {
 
-            if (!socket.room)
-                return;
+        if (!socket.room)
+            return;
 
-            socket
+        socket
             .to(socket.room)
             .emit(
                 "chat-message",
                 msg
             );
 
+    });
+
+    socket.on("change-password", (newPassword) => {
+
+        if (
+            socket.room &&
+            rooms[socket.room]
+        ) {
+
+            rooms[socket.room].password =
+                newPassword;
+
+            io.to(socket.room).emit(
+                "password-changed"
+            );
+
         }
-    );
+
+    });
+
+    /* ------------------
+       KALİTE DEĞİŞİMİ
+    ------------------- */
 
     socket.on(
-        "change-password",
-        newPassword => {
+        "quality-change",
+        (quality) => {
 
-            if (
-                socket.room &&
-                rooms[socket.room]
-            ) {
+            if (!socket.room)
+                return;
 
-                rooms[
-                    socket.room
-                ].password =
-                    newPassword;
-
-                io.to(
-                    socket.room
-                ).emit(
-                    "password-changed"
+            socket
+                .to(socket.room)
+                .emit(
+                    "quality-change",
+                    quality
                 );
 
-            }
+        }
+    );
+
+    /* ------------------
+       PING TESTİ
+    ------------------- */
+
+    socket.on(
+        "ping-check",
+        (timestamp) => {
+
+            socket.emit(
+                "pong-check",
+                timestamp
+            );
 
         }
     );
 
-    socket.on(
-        "disconnect",
-        () => {
+    socket.on("disconnect", () => {
 
-            const room =
-                socket.room;
+        const room =
+            socket.room;
 
-            if (
-                room &&
-                rooms[room]
-            ) {
+        if (
+            room &&
+            rooms[room]
+        ) {
 
-                rooms[room].users =
-                    rooms[room].users.filter(
-                        id =>
-                            id !== socket.id
-                    );
+            rooms[room].users =
+                rooms[room].users.filter(
+                    id => id !== socket.id
+                );
 
-                socket
+            socket
                 .to(room)
                 .emit(
                     "user-disconnected"
                 );
 
-                if (
-                    rooms[room]
-                        .users.length === 0
-                ) {
+            if (
+                rooms[room].users.length === 0
+            ) {
 
-                    delete rooms[room];
-
-                }
+                delete rooms[room];
 
             }
 
-            console.log(
-                "Ayrıldı:",
-                socket.id
-            );
-
         }
-    );
+
+        console.log(
+            "Ayrıldı:",
+            socket.id
+        );
+
+    });
 
 });
 
