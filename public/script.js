@@ -729,7 +729,7 @@ micEnabled
 ? "🎤 Açık"
 : "🔇 Kapalı";
 
-};
+
 
 /* ------------------
    KAMERA
@@ -761,7 +761,7 @@ camEnabled
 ? "📷 Açık"
 : "🚫 Kapalı";
 
-};
+
 
 /* ------------------
    KAMERA ÇEVİR
