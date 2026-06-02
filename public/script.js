@@ -89,6 +89,9 @@ let currentFacingMode = "user";
 
 let pingTimer = null;
 
+micBtn.textContent = "🎤";
+camBtn.textContent = "📷";
+
 /* ------------------
    KAMERA
 ------------------- */
@@ -101,7 +104,7 @@ facingMode = currentFacingMode
 if(localStream){
 
 localStream
-.getTracks()
+.getVideoTracks()
 .forEach(track=>
 track.stop()
 );
@@ -391,6 +394,11 @@ connectionQuality.className =
 qualitySelect.onchange =
 async ()=>{
 
+console.log(
+"Önce audio:",
+localStream.getAudioTracks().length
+);
+
 currentQuality =
 parseInt(
 qualitySelect.value
@@ -404,6 +412,31 @@ currentQuality
 await startCamera(
 currentQuality,
 currentFacingMode
+);
+
+console.log(
+"Sonra audio:",
+localStream.getAudioTracks().length
+);
+
+currentQuality =
+parseInt(
+qualitySelect.value
+);
+
+socket.emit(
+"quality-change",
+currentQuality
+);
+
+await startCamera(
+currentQuality,
+currentFacingMode
+);
+
+console.log(
+"Audio track:",
+localStream.getAudioTracks()[0]
 );
 
 if(peer){
@@ -495,19 +528,35 @@ screenStream
 
 if(peer){
 
-const sender =
-peer._pc
-.getSenders()
-.find(
-s=>
+const senders =
+peer._pc.getSenders();
+
+const videoSender =
+senders.find(
+s =>
 s.track &&
-s.track.kind==="video"
+s.track.kind === "video"
 );
 
-if(sender){
+const audioSender =
+senders.find(
+s =>
+s.track &&
+s.track.kind === "audio"
+);
 
-sender.replaceTrack(
-screenTrack
+if(videoSender){
+
+await videoSender.replaceTrack(
+localStream.getVideoTracks()[0]
+);
+
+}
+
+if(audioSender){
+
+await audioSender.replaceTrack(
+localStream.getAudioTracks()[0]
 );
 
 }
@@ -722,12 +771,12 @@ micEnabled;
 
 });
 
-};
-
 micBtn.textContent =
 micEnabled
-? "🎤 Açık"
-: "🔇 Kapalı";
+? "🎤"
+: "🔇";
+
+};
 
 
 
@@ -754,12 +803,12 @@ camEnabled;
 
 });
 
-};
-
 camBtn.textContent =
 camEnabled
-? "📷 Açık"
-: "🚫 Kapalı";
+? "📷"
+: "🚫";
+
+};
 
 
 
@@ -786,20 +835,35 @@ currentFacingMode
 
 if(peer){
 
-const sender =
-peer._pc
-.getSenders()
-.find(
+const senders =
+peer._pc.getSenders();
+
+const videoSender =
+senders.find(
 s =>
 s.track &&
-s.track.kind==="video"
+s.track.kind === "video"
 );
 
-if(sender){
+const audioSender =
+senders.find(
+s =>
+s.track &&
+s.track.kind === "audio"
+);
 
-await sender.replaceTrack(
-localStream
-.getVideoTracks()[0]
+if(videoSender){
+
+await videoSender.replaceTrack(
+localStream.getVideoTracks()[0]
+);
+
+}
+
+if(audioSender){
+
+await audioSender.replaceTrack(
+localStream.getAudioTracks()[0]
 );
 
 }
