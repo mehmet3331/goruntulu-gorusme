@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   initSocketHarman();
 });
 
-function ensureAllMessagesHaveDotMenu(){ const all = document.querySelectorAll(".myMessage, .otherMessage"); all.forEach(el=>{ if(!el.querySelector(".msgDotBtn")){ const isMine = el.classList.contains("myMessage"); const txt = el.querySelector(".msgText")?.textContent || el.querySelector(".pollQuestion")?.textContent || ""; addDotMenuButton(el, el.id, isMine, txt); } }); }
+function ensureAllMessagesHaveDotMenu(){ return; // FIX: dot menü iptal
 function initHarmanUI(){
   const replyBar = document.getElementById("replyPreviewBar");
   const replyCancel = document.getElementById("replyCancel");
@@ -360,109 +360,9 @@ function enhanceMessageDOM(msgId, data, isMine){
 
   addActionButtonsToMessage(el, msgId, isMine, data.t||"");
 }
-
 function addActionButtonsToMessage(msgEl, msgId, isMine, textContent){
-  if(msgEl.querySelector(".msgActions")) return;
-  // V29 - Instagram/WhatsApp tarzı swipe - basılı tut kaldırıldı
-  const bubble = msgEl.querySelector(".msgBubble");
-  if(!bubble) return;
-
-  // Swipe için değişkenler
-  let startX=0, startY=0, currentX=0, isSwiping=false, swipeTriggered=false;
-
-  const onTouchStart = (e)=>{
-    const t = e.touches ? e.touches[0] : e;
-    startX = t.clientX;
-    startY = t.clientY;
-    currentX = 0;
-    isSwiping = false;
-    swipeTriggered = false;
-    bubble.style.transition = "none";
-  };
-  const onTouchMove = (e)=>{
-    if(!startX) return;
-    const t = e.touches ? e.touches[0] : e;
-    const dx = t.clientX - startX;
-    const dy = t.clientY - startY;
-    // yatay kaydırma baskınsa swipe moduna geç
-    if(Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy)*1.5){
-      isSwiping = true;
-      currentX = dx;
-      // sadece sağa kaydırma (reply) için görsel geri bildirim - Instagram tarzı
-      if(dx > 0 && dx < 120){
-        bubble.style.transform = `translateX(${dx*0.5}px)`;
-        bubble.style.opacity = `${1 - dx/300}`;
-        if(!msgEl.querySelector(".swipeReplyHint")){
-          const hint = document.createElement("div");
-          hint.className = "swipeReplyHint";
-          hint.style.cssText = "position:absolute; left:10px; top:50%; transform:translateY(-50%); background:#00c853; color:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; z-index:5;";
-          hint.textContent = "↩️";
-          msgEl.style.position="relative";
-          msgEl.appendChild(hint);
-        }
-      }
-      // sola kaydırma da engelleme yok
-      if(Math.abs(dx) > 10) e.preventDefault && e.preventDefault();
-    }
-  };
-  const onTouchEnd = (e)=>{
-    if(!isSwiping){ 
-      // swipe değilse - sadece dokunma, bubble'ı sıfırla
-      bubble.style.transition = "transform 0.2s, opacity 0.2s";
-      bubble.style.transform = "";
-      bubble.style.opacity = "";
-      const hint = msgEl.querySelector(".swipeReplyHint");
-      if(hint) hint.remove();
-      startX=0;
-      return;
-    }
-    bubble.style.transition = "transform 0.2s, opacity 0.2s";
-    const dx = currentX;
-    const hint = msgEl.querySelector(".swipeReplyHint");
-    if(hint) hint.remove();
-    
-    if(dx > 60){
-      // sağa kaydır -> alıntıla (Instagram/WhatsApp gibi)
-      bubble.style.transform = "";
-      bubble.style.opacity = "";
-      handleMessageAction("reply", msgId, isMine, textContent, msgEl);
-      // haptic feedback
-      if(navigator.vibrate) navigator.vibrate(30);
-    }else if(dx < -60){
-      // sola kaydır -> seçenekleri aç
-      bubble.style.transform = "";
-      bubble.style.opacity = "";
-      openActionMenu(msgId, isMine, textContent, msgEl, e);
-      if(navigator.vibrate) navigator.vibrate(30);
-    }else{
-      bubble.style.transform = "";
-      bubble.style.opacity = "";
-    }
-    startX=0;
-    currentX=0;
-    isSwiping=false;
-  };
-
-  // Dokunma olayları - swipe için
-  msgEl.addEventListener("touchstart", onTouchStart, {passive:true});
-  msgEl.addEventListener("touchmove", onTouchMove, {passive:false});
-  msgEl.addEventListener("touchend", onTouchEnd, {passive:true});
-  
-  // Mouse için de swipe (desktop)
-  let mouseDown=false;
-  msgEl.addEventListener("mousedown", (e)=>{ mouseDown=true; onTouchStart(e); });
-  msgEl.addEventListener("mousemove", (e)=>{ if(mouseDown) onTouchMove(e); });
-  msgEl.addEventListener("mouseup", (e)=>{ if(mouseDown){ mouseDown=false; onTouchEnd(e); } });
-  msgEl.addEventListener("mouseleave", ()=>{ mouseDown=false; bubble.style.transform=""; bubble.style.opacity=""; const h=msgEl.querySelector(".swipeReplyHint"); if(h) h.remove(); });
-
-  // Tıklama -> ortada seçenekler (basılı tut değil, tıklama)
-  bubble.addEventListener("click", (e)=>{
-    // eğer swipe yapıldıysa click'i engelle
-    if(isSwiping || Math.abs(currentX) > 20) return;
-    openActionMenu(msgId, isMine, textContent, msgEl, e);
-  });
+  return; // FIX: iptal - mesaj seçenekleri tamamen kapatıldı
 }
-
 function handleMessageAction(act, msgId, isMine, text, msgEl){
   const menu = document.getElementById("msgActionMenu");
   if(menu) menu.style.display="none";
@@ -515,45 +415,8 @@ function handleMessageAction(act, msgId, isMine, text, msgEl){
 }
 
 function openActionMenu(msgId, isMine, text, msgEl, ev){
-  const menu = document.getElementById("msgActionMenu");
-  if(!menu) return;
-  menu.innerHTML="";
-  
-  // V29 - Header + Çarpı tuşu - yanlışlıkla basınca geri dön
-  const header = document.createElement("div");
-  header.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #333; margin-bottom:6px;";
-  header.innerHTML = `<span style="font-size:12px; color:#888;">Mesaj Seçenekleri</span><button id="msgMenuCloseX" style="width:28px; height:28px; background:#222; border:1px solid #444; border-radius:50%; color:#fff; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>`;
-  menu.appendChild(header);
-  header.querySelector("#msgMenuCloseX").onclick = ()=>{ menu.style.display="none"; };
-  
-  const actions = [
-    {icon:"↩️", label:"Alıntıla (Sağa kaydır)", act:"reply"},
-    {icon:"📌", label:"Sabitle", act:"pin"},
-    {icon:"⭐", label: starredMessages.has(msgId) ? "Yıldızı kaldır" : "Yıldızla", act:"star"},
-    {icon:"↪️", label:"İlet", act:"forward"},
-    {icon:"🌐", label:"Çevir", act:"translate"},
-    {icon:"📋", label:"Kopyala", act:"copy"},
-  ];
-  if(isMine){
-    actions.unshift({icon:"✏️", label:"Düzenle", act:"edit"});
-    actions.push({icon:"🗑️", label:"Sil", act:"delete"});
-  }
-  actions.forEach(a=>{
-    const btn = document.createElement("button");
-    btn.innerHTML = `<span class="icon">${a.icon}</span> ${a.label}`;
-    btn.onclick = ()=>{ menu.style.display="none"; handleMessageAction(a.act, msgId, isMine, text, msgEl); };
-    menu.appendChild(btn);
-  });
-  
-  // Arka plana tıklayınca kapat
-  menu.onclick = (e)=>{ if(e.target===menu) menu.style.display="none"; };
-  
-  menu.style.left = "50%";
-  menu.style.top = "50%";
-  menu.style.transform = "translate(-50%, -50%)";
-  menu.style.display="block";
+  return; // FIX: menü iptal
 }
-
 function showReplyBar(data){
   const bar = document.getElementById("replyPreviewBar");
   if(!bar) return;

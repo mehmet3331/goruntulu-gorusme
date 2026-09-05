@@ -72,7 +72,7 @@ const cameraBtn = document.getElementById("cameraBtn");
 const cameraInput = document.getElementById("cameraInput");
 
 let peer = null; let localStream = null; let currentRoom = ""; let currentPassword = ""; let myUsername = ""; let myRealUsername = "";
-let micEnabled = true; let camEnabled = true;
+let micEnabled = false; let camEnabled = false; // FIX: açılışta kapalı
 let currentQuality = 720; let currentFacingMode = "user"; let pingTimer = null; let currentMediaData = null;
 let typingTimer; let isTyping = false; let messageIdCounter = 0;
 const sentMessages = new Map();
@@ -1824,54 +1824,8 @@ function enhanceMessageDOM(msgId, data, isMine){
 
   addActionButtonsToMessage(el, msgId, isMine, data.t||"");
 }
-
 function addActionButtonsToMessage(msgEl, msgId, isMine, textContent){
-  if(msgEl.querySelector(".msgActions")) return;
-  const actions = document.createElement("div");
-  actions.className = "msgActions";
-  // buttons
-  const btns = [
-    {icon:"↩️", title:"Alıntıla", act:"reply"},
-    {icon:"📌", title:"Sabitle", act:"pin"},
-    {icon:"⭐", title:"Yıldızla", act:"star"},
-    {icon:"↪️", title:"İlet", act:"forward"},
-    {icon:"🌐", title:"Çevir", act:"translate"},
-  ];
-  if(isMine){
-    btns.unshift({icon:"✏️", title:"Düzenle", act:"edit"});
-  }
-  btns.push({icon:"⋯", title:"Daha fazla", act:"more"});
-
-  btns.forEach(b=>{
-    const btn = document.createElement("button");
-    btn.textContent = b.icon;
-    btn.title = b.title;
-    btn.dataset.act = b.act;
-    btn.onclick = (e)=>{
-      e.stopPropagation();
-      handleMessageAction(b.act, msgId, isMine, textContent, msgEl);
-    };
-    actions.appendChild(btn);
-  });
-  msgEl.appendChild(actions);
-
-  // long press to open menu
-  let pressTimer=null;
-  const startPress = (e)=>{
-    pressTimer = setTimeout(()=>{ openActionMenu(msgId, isMine, textContent, msgEl, e); }, 600);
-  };
-  const cancelPress = ()=>{ if(pressTimer) clearTimeout(pressTimer); };
-  msgEl.addEventListener("touchstart", startPress, {passive:true});
-  msgEl.addEventListener("touchend", cancelPress);
-  msgEl.addEventListener("mousedown", startPress);
-  msgEl.addEventListener("mouseup", cancelPress);
-  msgEl.addEventListener("mouseleave", cancelPress);
-
-  // double click quick reply
-  msgEl.addEventListener("dblclick", (e)=>{
-    e.preventDefault();
-    handleMessageAction("reply", msgId, isMine, textContent, msgEl);
-  });
+  return; // FIX: iptal
 }
 
 function handleMessageAction(act, msgId, isMine, text, msgEl){
@@ -1926,6 +1880,7 @@ function handleMessageAction(act, msgId, isMine, text, msgEl){
 }
 
 function openActionMenu(msgId, isMine, text, msgEl, ev){
+  return; // FIX: tüm seçenekler iptal - hiç menü açılmasın
   const menu = document.getElementById("msgActionMenu");
   if(!menu) return;
   menu.innerHTML="";
